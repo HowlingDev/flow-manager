@@ -6,6 +6,8 @@ import com.example.repositories.FileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class FileProcessingService {
@@ -27,5 +29,9 @@ public class FileProcessingService {
         FileEntity entity = fileRepository.findById(event.getEventId()).orElseThrow();
         entity.setStatus(FileEntity.Status.FAIL);
         fileRepository.save(entity);
+    }
+
+    public FileEntity findFileById(UUID uuid) {
+        return fileRepository.findById(uuid).orElseThrow();
     }
 }
