@@ -1,7 +1,7 @@
 server:
   error:
     include-message: always
-  port: 8080
+  port: 0
 
 minio:
   endpoint: ${MINIO_ENDPOINT}
