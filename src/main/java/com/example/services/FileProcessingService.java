@@ -3,9 +3,10 @@ package com.example.services;
 import com.example.entities.FileEntity;
 import com.example.events.ConvertFileToPdfEvent;
 import com.example.events.FileConversionEvent;
+import com.example.exceptions.DownloadStatusException;
+import com.example.exceptions.FileNotFoundException;
 import com.example.exceptions.MinioDownloadException;
 import com.example.exceptions.MinioUploadException;
-import com.example.repositories.FileRepository;
 import io.minio.errors.MinioException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,13 +17,14 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class FileProcessingService {
 
-    private final FileRepository fileRepository;
+    private final FileService fileService;
     private final MinioService minioService;
     private final KafkaTemplate<String, ConvertFileToPdfEvent> kafkaTemplate;
     @Value("${spring.kafka.topics.convert-event}")
@@ -39,7 +41,7 @@ public class FileProcessingService {
             );
             ConvertFileToPdfEvent event = new ConvertFileToPdfEvent(uuid, file.getOriginalFilename());
             kafkaTemplate.send(convertTopic, event);
-            fileRepository.save(entity);
+            fileService.saveFile(entity);
             return uuid.toString();
         } catch (IOException | MinioException e) {
             throw new MinioUploadException(e.getMessage());
@@ -48,25 +50,39 @@ public class FileProcessingService {
     }
 
     public void processSuccessEvent(FileConversionEvent event) {
-        FileEntity entity = fileRepository.findById(event.getEventId()).orElseThrow();
+        FileEntity entity = findFileById(event.getEventId());
         entity.setStatus(FileEntity.Status.SUCCESS);
         entity.setFileName(event.getMessage());
-        fileRepository.save(entity);
+        fileService.saveFile(entity);
     }
 
     public void processFailedEvent(FileConversionEvent event) {
-        FileEntity entity = fileRepository.findById(event.getEventId()).orElseThrow();
+        FileEntity entity = findFileById(event.getEventId());
         entity.setStatus(FileEntity.Status.FAIL);
-        fileRepository.save(entity);
+        fileService.saveFile(entity);
     }
 
     public FileEntity findFileById(UUID uuid) {
-        return fileRepository.findById(uuid).orElseThrow();
+
+        Optional<FileEntity> entity = fileService.findById(uuid);
+        if (entity.isPresent()) {
+            return entity.get();
+        } else {
+            throw new FileNotFoundException(String.format("Файл с %s не найден", uuid));
+        }
     }
 
-    public StreamingResponseBody downloadFile(String fileName) {
+    public FileEntity.Status getStatus(UUID uuid)  {
+        return findFileById(uuid).getStatus();
+    }
+
+    public StreamingResponseBody downloadFile(UUID uuid) {
+        FileEntity entity = findFileById(uuid);
+        if (entity.getStatus() != FileEntity.Status.SUCCESS) {
+            throw new DownloadStatusException("Файл не готов к загрузке. Проверьте статус и попробуйте позже");
+        }
         return outputStream -> {
-            try (InputStream stream = minioService.download(fileName)) {
+            try (InputStream stream = minioService.download(entity.getFileName())) {
                 byte[] buffer = new byte[1024];
                 int bytesRead;
                 while ((bytesRead = stream.read(buffer)) != -1) {

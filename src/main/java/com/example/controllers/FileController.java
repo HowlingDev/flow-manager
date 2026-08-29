@@ -1,6 +1,5 @@
 package com.example.controllers;
 
-import com.example.entities.FileEntity;
 import com.example.services.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -32,17 +31,14 @@ public class FileController {
 
     @GetMapping("/status/{id}")
     public String getStatus(@PathVariable UUID id) {
-        return fileProcessingService.findFileById(id).getStatus().toString();
+
+        return fileProcessingService.getStatus(id).toString();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<StreamingResponseBody> getFile(@PathVariable UUID id) {
-        FileEntity entity = fileProcessingService.findFileById(id);
-        if (entity.getStatus() != FileEntity.Status.SUCCESS) {
-            return ResponseEntity.badRequest().build();
-        }
 
-        StreamingResponseBody responseBody = fileProcessingService.downloadFile(entity.getFileName());
+        StreamingResponseBody responseBody = fileProcessingService.downloadFile(id);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"document.pdf\"")
