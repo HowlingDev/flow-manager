@@ -1,3 +1,65 @@
+server:
+  error:
+    include-message: always
+  port: 0
+
+minio:
+  endpoint: ${MINIO_ENDPOINT}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  bucket: ${MINIO_BUCKET_NAME}
+
+logging:
+  level:
+    org.springframework.kafka: INFO
+    org.apache.kafka: INFO
+    org.springframework.kafka.transaction: TRACE
+    org.springframework.transaction: TRACE
+
+eureka:
+  client:
+    service-url:
+      defaultZone: {EUREKA_URL}
+
 spring:
   application:
     name: flow-manager
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+  kafka:
+    topics:
+      convert-event: convert-to-pdf-topic
+      success-event: successful-file-conversion-topic
+      failed-event: failed-file-conversion-topic
+    admin:
+      auto-create: false
+    consumer:
+      bootstrap-servers: {KAFKA_BOOTSTRAP_SERVERS}
+      group-id: flow-manager-group
+      enable-auto-commit: true
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.events
+    producer:
+      bootstrap-servers: {KAFKA_BOOTSTRAP_SERVERS}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      enable:
+        idempotence: true
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+      enabled: true
