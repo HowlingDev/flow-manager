@@ -31,4 +31,11 @@ public class FileErrorsHandler {
 
         return ResponseEntity.badRequest().body(e.getMessage());
     }
+
+    @ExceptionHandler(SubscriptionStatusException.class)
+    public ResponseEntity<String> handleSubscriptionStatusException(SubscriptionStatusException e) {
+
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
 }
