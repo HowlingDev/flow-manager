@@ -1,10 +1,5 @@
 package com.example.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+public record SubscriptionKafkaDto (String login) {
 
-@Data
-@AllArgsConstructor
-public class SubscriptionKafkaDto {
-    private String login;
 }

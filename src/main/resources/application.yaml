@@ -16,6 +16,21 @@ logging:
     org.springframework.kafka.transaction: TRACE
     org.springframework.transaction: TRACE
 
+management:
+  server:
+    port: 8082
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+
 eureka:
   client:
     service-url:

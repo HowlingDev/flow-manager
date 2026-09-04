@@ -34,6 +34,6 @@ public class KafkaListenerService {
             groupId = "${spring.kafka.consumer.group-id}"
     )
     public void handleCancelEvent(SubscriptionKafkaDto subscriptionKafkaDto) {
-        cacheService.deleteSubscriptionFromCache(subscriptionKafkaDto.getLogin());
+        cacheService.deleteSubscriptionFromCache(subscriptionKafkaDto.login());
     }
 }

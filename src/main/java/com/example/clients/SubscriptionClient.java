@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "subscription-service")
 public interface SubscriptionClient {
 
-    @GetMapping("/subscriptions/check/{login}")
+    @GetMapping("/api/v1/subscriptions/check/{login}")
     String checkSubscription(@PathVariable String login);
 }
