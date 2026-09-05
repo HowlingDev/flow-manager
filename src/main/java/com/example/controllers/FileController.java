@@ -1,5 +1,6 @@
 package com.example.controllers;
 
+import com.example.dto.UploadResponse;
 import com.example.services.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -25,16 +26,16 @@ public class FileController {
     private final FileProcessingService fileProcessingService;
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file,
-                                             @RequestHeader("X-User-Login") String login
+    public ResponseEntity<UploadResponse> uploadFile(@RequestParam("file") MultipartFile file,
+                                                     @RequestHeader("X-User-Login") String login
     ) {
-            return ResponseEntity.ok(fileProcessingService.processFile(file, login));
+            return ResponseEntity.ok(new UploadResponse(fileProcessingService.processFile(file, login)));
     }
 
     @GetMapping("/status/{id}")
-    public String getStatus(@PathVariable UUID id) {
+    public ResponseEntity<String> getStatus(@PathVariable UUID id) {
 
-        return fileProcessingService.getStatus(id).toString();
+        return ResponseEntity.ok(fileProcessingService.getStatus(id).toString());
     }
 
     @GetMapping("/{id}")

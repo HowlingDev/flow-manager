@@ -14,7 +14,7 @@ public class CacheService {
 
     @Cacheable(value = "subscription", key = "#login")
     public String getSubscriptionType(String login) {
-        return subscriptionClient.checkSubscription(login);
+        return subscriptionClient.checkSubscription(login).toString();
     }
 
     @CacheEvict(value = "subscription", key = "#login")

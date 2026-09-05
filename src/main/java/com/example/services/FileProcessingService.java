@@ -31,11 +31,14 @@ public class FileProcessingService {
     private final CacheService cacheService;
     @Value("${spring.kafka.topics.convert-event}")
     private String convertTopic;
+    private static final int MAX_FILE_SIZE_MB = 100;
+    private static final double BYTES_TO_MB_COEF = 1024.0 * 1024.0;
+    private static final String SUBSCRIPTION_TYPE_FREE = "FREE";
 
     public String processFile(MultipartFile file, String login) {
         String subscriptionType = cacheService.getSubscriptionType(login);
-        double megabytes = file.getSize() / (1024.0 * 1024.0);
-        if (subscriptionType.equals("FREE") && megabytes > 100) {
+        double megabytes = file.getSize() / BYTES_TO_MB_COEF;
+        if (SUBSCRIPTION_TYPE_FREE.equals(subscriptionType) && megabytes > MAX_FILE_SIZE_MB) {
             throw new SubscriptionStatusException("Пользователи с бесплатной подпиской могут загружать файлы не более 100 MB");
         }
         try {
