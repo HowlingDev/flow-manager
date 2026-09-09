@@ -1,5 +1,6 @@
 package com.example.services;
 
+import com.example.dto.SubscriptionKafkaDto;
 import com.example.events.FileConversionEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 public class KafkaListenerService {
 
     private final FileProcessingService fileProcessingService;
+    private final CacheService cacheService;
 
     @KafkaListener(
             topics = "${spring.kafka.topics.success-event}",
@@ -25,5 +27,13 @@ public class KafkaListenerService {
     )
     public void handleFailedEvent(FileConversionEvent event) {
         fileProcessingService.processFailedEvent(event);
+    }
+
+    @KafkaListener(
+            topics = "${spring.kafka.topics.cancel-event}",
+            groupId = "${spring.kafka.consumer.group-id}"
+    )
+    public void handleCancelEvent(SubscriptionKafkaDto subscriptionKafkaDto) {
+        cacheService.deleteSubscriptionFromCache(subscriptionKafkaDto.login());
     }
 }

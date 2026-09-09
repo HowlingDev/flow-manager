@@ -7,6 +7,7 @@ import com.example.exceptions.DownloadStatusException;
 import com.example.exceptions.FileNotFoundException;
 import com.example.exceptions.MinioDownloadException;
 import com.example.exceptions.MinioUploadException;
+import com.example.exceptions.SubscriptionStatusException;
 import io.minio.errors.MinioException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,10 +28,19 @@ public class FileProcessingService {
     private final FileService fileService;
     private final MinioService minioService;
     private final KafkaTemplate<String, ConvertFileToPdfEvent> kafkaTemplate;
+    private final CacheService cacheService;
     @Value("${spring.kafka.topics.convert-event}")
     private String convertTopic;
+    private static final int MAX_FILE_SIZE_MB = 100;
+    private static final double BYTES_TO_MB_COEF = 1024.0 * 1024.0;
+    private static final String SUBSCRIPTION_TYPE_FREE = "FREE";
 
-    public String processFile(MultipartFile file) {
+    public String processFile(MultipartFile file, String login) {
+        String subscriptionType = cacheService.getSubscriptionType(login);
+        double megabytes = file.getSize() / BYTES_TO_MB_COEF;
+        if (SUBSCRIPTION_TYPE_FREE.equals(subscriptionType) && megabytes > MAX_FILE_SIZE_MB) {
+            throw new SubscriptionStatusException("Пользователи с бесплатной подпиской могут загружать файлы не более 100 MB");
+        }
         try {
             minioService.upload(file, file.getOriginalFilename());
             UUID uuid = UUID.randomUUID();

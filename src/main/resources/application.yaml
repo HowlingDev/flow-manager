@@ -16,6 +16,21 @@ logging:
     org.springframework.kafka.transaction: TRACE
     org.springframework.transaction: TRACE
 
+management:
+  server:
+    port: 8082
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+
 eureka:
   client:
     service-url:
@@ -41,6 +56,7 @@ spring:
       convert-event: convert-to-pdf-topic
       success-event: successful-file-conversion-topic
       failed-event: failed-file-conversion-topic
+      cancel-event: invalidate-subscription-cache-topic
     admin:
       auto-create: false
     consumer:
@@ -51,7 +67,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
       properties:
-        spring.json.trusted.packages: com.example.events
+        spring.json.trusted.packages: com.example.events, com.example.dto
     producer:
       bootstrap-servers: {KAFKA_BOOTSTRAP_SERVERS}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -63,3 +79,11 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
       enabled: true
+  cache:
+    type: redis
+    redis:
+      time-to-live: 60m
+  data:
+    redis:
+      host: {REDIS_HOST}
+      port: {REDIS_PORT}
